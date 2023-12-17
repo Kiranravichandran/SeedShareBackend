@@ -8,7 +8,7 @@ volumes:
 
 networks:
   mynetwork.com:
-    name: fabric_test
+    name: seedshare
 
 services:
 
@@ -20,6 +20,7 @@ services:
       - DATABASE_DATABASE=fabricexplorer
       - DATABASE_USERNAME=hppoc
       - DATABASE_PASSWORD=password
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
     healthcheck:
       test: "pg_isready -h localhost -p 5432 -q -U postgres"
       interval: 30s
@@ -46,8 +47,10 @@ services:
       - DISCOVERY_AS_LOCALHOST=false
       - PORT=${PORT:-8080}
     volumes:
-      - ./config.json
-      - ./connection-profile
+      - ./config.json:/opt/explorer/app/platform/fabric/config.json
+      - ./connection-profile:/opt/explorer/app/platform/fabric/connection-profile
+      - ./organizations:/tmp/crypto
+      - walletstore:/opt/explorer/wallet
     ports:
       - ${PORT:-8080}:${PORT:-8080}
     depends_on:

@@ -39,9 +39,9 @@ class FarmerContract extends Contract {
         return newRequestObject;
     }
 
-    async viewUser(ctx, name, ssn) {
+    async viewFarmer(ctx, name, ssn) {
         /*
-        viewUser method is to check the registered and validated users within the network
+        viewFarmer method is to check the registered and validated users within the network
         It supports following arguments:
         name --> Name of the farmer
         ssn --> Social security number of the project
@@ -56,9 +56,33 @@ class FarmerContract extends Contract {
         }
     }
 
+    async approveNewFarmer(ctx, name, ssn) {
+        /*
+        approveNewFarmer is a method which is used to approve the farmer who is on the request asset.
+        It supports following arguments:
+        name --> farmer name
+        ssn --> social security number of the farmer.
+        */
+        const userRequestKey = ctx.stub.createCompositeKey('SeedshareNetwork.farmer.request', [name, ssn])
+        const userKey = ctx.stub.createCompositeKey('SeedshareNetwork.farmer', [name, ssn])
+        const requestBuffer = await ctx.stub.getState(userRequestKey);
+        console.log(requestBuffer.toString());
+        if (requestBuffer) {
+            let userdict = JSON.parse(requestBuffer.toString());
+            userdict.seedshareCoins = 0;
+            const userBuffer = Buffer.from(JSON.stringify(userdict));
+            await ctx.stub.putState(userKey, userBuffer);
+            return userdict;
+        }
+        else {
+            return 'Asset with key ' + name + ' does not exist on the network';
+        }
+
+    }
+
     async rechargeAccount(ctx, name, ssn, price, banktxnid) {
         /*
-        rechargeAccount method is to recharge the farmer wallet something called upgradCoins within the network.
+        rechargeAccount method is to recharge the farmer wallet something called seedShareCoins within the network.
         It supports following arguments:
         name --> name of the farmer
         ssn --> social security number of the project
@@ -68,10 +92,10 @@ class FarmerContract extends Contract {
         const userKey = ctx.stub.createCompositeKey('SeedshareNetwork.farmer', [name, ssn])
         const userBuffer = await ctx.stub.getState(userKey);
         if (userBuffer) {
-            if (banktxnid == 'upg100' || banktxnid == 'upg500' || banktxnid == 'upg1000') {
-                let coins = banktxnid.replace('upg', '');
+            if (banktxnid == 'ssh100' || banktxnid == 'ssh500' || banktxnid == 'ssh1000') {
+                let coins = banktxnid.replace('ssh', '');
                 let userdict = JSON.parse(userBuffer.toString());
-                userdict.upgradCoins += parseInt(price);
+                userdict.seedshareCoins += parseInt(price);
                 const rechargedaccBuffer = Buffer.from(JSON.stringify(userdict));
                 await ctx.stub.putState(userKey, rechargedaccBuffer);
                 return userdict;
@@ -110,22 +134,6 @@ class FarmerContract extends Contract {
         }
 
     }
-    async viewProperty(ctx, prop_id, owner) {
-        /*
-        viewProperty method is to check the registered and validated property within the network
-        It supports following arguments:
-        prop_id --> ID of the property
-        owner --> owner of the property
-        */
-        const propKey = ctx.stub.createCompositeKey('SeedshareNetwork.property', [prop_id, owner]);
-        const propBuffer = await ctx.stub.getState(propKey);
-        if (propBuffer) {
-            return JSON.parse(propBuffer.toString());
-        }
-        else {
-            return 'Asset with key ' + prop_id + ' does not exist on the network';
-        }
-    }
 
     async purchaseProperty(ctx, prop_id, owner, buyers_name, buyers_ssn) {
         /*
@@ -146,13 +154,13 @@ class FarmerContract extends Contract {
             // Checking whether property status is on sale.
             if (propdict.status == "onSale") {
                 // Check whether farmer have sufficient balance to buy the property.
-                if (propdict.price <= userdict.upgradCoins) {
-                    let deductprice = userdict.upgradCoins - propdict.price;
+                if (propdict.price <= userdict.seedshareCoins) {
+                    let deductprice = userdict.seedshareCoins - propdict.price;
                     propdict.owner = buyers_name;
                     userdict.name = buyers_name;
                     //propdict.price = deductprice;
                     propdict.status = "registered";
-                    userdict.upgradCoins = deductprice;
+                    userdict.seedshareCoins = deductprice;
                     const updpropBuffer = Buffer.from(JSON.stringify(propdict));
                     const upduserBuffer = Buffer.from(JSON.stringify(userdict));
                     await ctx.stub.putState(propKey, updpropBuffer);
@@ -168,6 +176,71 @@ class FarmerContract extends Contract {
             }
         }
 
+    }
+
+    async approvePropertyRegistration(ctx, prop_id, owner) {
+        /*
+        approvePropertyRegistration is a method which is used to approve the property who is on the request asset.
+        It supports following arguments:
+        prop_id --> ID of the property
+        owner --> owner of the property.
+        */
+        const propRequestKey = ctx.stub.createCompositeKey('SeedshareNetwork.property.request', [prop_id, owner]);
+        const propKey = ctx.stub.createCompositeKey('SeedshareNetwork.property', [prop_id, owner]);
+        const requestPropBuffer = await ctx.stub.getState(propRequestKey);
+        if (requestPropBuffer) {
+            let propdict = JSON.parse(requestPropBuffer.toString());
+            const propBuffer = Buffer.from(JSON.stringify(propdict));
+            await ctx.stub.putState(propKey, propBuffer);
+            return propdict;
+        }
+        else {
+            return 'Asset with key property ' + prop_id + ' does not exist on the network';
+        }
+    }
+
+    async viewProperty(ctx, prop_id, owner) {
+        /*
+        viewProperty method is to check the registered and validated property within the network
+        It supports following arguments:
+        prop_id --> ID of the property
+        owner --> owner of the property
+        */
+        const propKey = ctx.stub.createCompositeKey('SeedshareNetwork.property', [prop_id, owner]);
+        const propBuffer = await ctx.stub.getState(propKey);
+        if (propBuffer) {
+            return JSON.parse(propBuffer.toString());
+        }
+        else {
+            return 'Asset with key ' + prop_id + ' does not exist on the network';
+        }
+    }
+
+    async updateProperty(ctx, prop_id, name, ssn, status) {
+        /*
+        updateProperty method is to update the property status from OnSale to Registered or viceVersa.
+        It supports following arguments:
+        prop_id --> ID of the property
+        name --> name of the farmer
+        ssn --> Social security number of farmer
+        status --> property status
+        */
+        const propKey = ctx.stub.createCompositeKey('SeedshareNetwork.property', [prop_id, name]);
+        const propBuffer = await ctx.stub.getState(propKey);
+        if (propBuffer) {
+            let propdict = JSON.parse(propBuffer.toString());
+            // Check whether owner is updating the property.  No farmer other than owner is allowed to update the property.
+            if (name == propdict.owner) {
+                propdict.status = status;
+                const propBuffer = Buffer.from(JSON.stringify(propdict));
+                await ctx.stub.putState(propKey, propBuffer);
+                return propdict;
+            }
+
+        }
+        else {
+            return "asset with property" + prop_id + "is not available on the network";
+        }
     }
 
 

@@ -1,5 +1,5 @@
 {
-	"name": "test-network",
+	"name": "seedshare",
 	"version": "1.0.0",
 	"client": {
 		"tlsEnable": true,

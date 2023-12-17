@@ -2,26 +2,7 @@
 	"network-configs": {
 		"test-network": {
 			"name": "Seedshare Network",
-			"profile": "./connection-profile/seedshare-network.json",
-			"enableAuthentication": false,
-			"bootMode": "ALL",
-			"noOfBlocks": 0
-		},
-		// "wallet": {
-		// 	"type": "filesystem",
-		// 	"label": "Wallet",
-		// 	"discovery": false,
-		// 	"assign": "admin",
-		// 	"administrator": {
-		// 		"username": "admin",
-		// 		"password": "adminpw"
-		// 	}
-		// },
-		"crypto": {
-			"path": "/tmp/crypto",
-			"keysize": 256,
-			"algorithm": "aes-256-gcm",
-			"hash": "sha3-256"
+			"profile": "./connection-profile/test-network.json"
 		}
 	},
 	"license": "Apache-2.0"
