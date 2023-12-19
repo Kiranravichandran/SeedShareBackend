@@ -24,11 +24,7 @@ VERBOSE=${12:-"false"}
 CCAAS_SERVER_PORT=9999
 
 : ${CONTAINER_CLI:="docker"}
-if command -v ${CONTAINER_CLI}-compose > /dev/null 2>&1; then
-    : ${CONTAINER_CLI_COMPOSE:="${CONTAINER_CLI}-compose"}
-else
-    : ${CONTAINER_CLI_COMPOSE:="${CONTAINER_CLI} compose"}
-fi
+: ${CONTAINER_CLI_COMPOSE:="${CONTAINER_CLI}-compose"}
 infoln "Using ${CONTAINER_CLI} and ${CONTAINER_CLI_COMPOSE}"
 
 println "executing with the following"
@@ -105,11 +101,10 @@ METADATA-EOF
 
     tar -C "$tempdir/src" -czf "$tempdir/pkg/code.tar.gz" .
     tar -C "$tempdir/pkg" -czf "$CC_NAME.tar.gz" metadata.json code.tar.gz
-    rm -Rf "$tempdir"
-
-    PACKAGE_ID=$(peer lifecycle chaincode calculatepackageid ${CC_NAME}.tar.gz)
+     rm -Rf "$tempdir"
   
     successln "Chaincode is packaged  ${address}"
+
 }
 
 buildDockerImages() {
@@ -117,7 +112,6 @@ buildDockerImages() {
   if [ "$CCAAS_DOCKER_RUN" = "true" ]; then
     # build the docker container
     infoln "Building Chaincode-as-a-Service docker image '${CC_NAME}' '${CC_SRC_PATH}'"
-    infoln "This may take several minutes..."
     set -x
     ${CONTAINER_CLI} build -f $CC_SRC_PATH/Dockerfile -t ${CC_NAME}_ccaas_image:latest --build-arg CC_SERVER_PORT=9999 $CC_SRC_PATH >&log.txt
     res=$?
@@ -155,12 +149,7 @@ startDockerContainer() {
   else
   
     infoln "Not starting docker containers; these are the commands we would have run"
-    infoln "    ${CONTAINER_CLI} run --rm -d --name peer0org1_${CC_NAME}_ccaas  \
-                  --network fabric_test \
-                  -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:${CCAAS_SERVER_PORT} \
-                  -e CHAINCODE_ID=$PACKAGE_ID -e CORE_CHAINCODE_ID_NAME=$PACKAGE_ID \
-                    ${CC_NAME}_ccaas_image:latest"
-    infoln "    ${CONTAINER_CLI} run --rm -d --name peer0org2_${CC_NAME}_ccaas  \
+    infoln "    docker run --rm -d --name peer0org1_${CC_NAME}_ccaas  \
                   --network fabric_test \
                   -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:${CCAAS_SERVER_PORT} \
                   -e CHAINCODE_ID=$PACKAGE_ID -e CORE_CHAINCODE_ID_NAME=$PACKAGE_ID \
@@ -180,8 +169,6 @@ infoln "Installing chaincode on peer0.org1..."
 installChaincode 1
 infoln "Install chaincode on peer0.org2..."
 installChaincode 2
-
-resolveSequence
 
 ## query whether the chaincode is installed
 queryInstalled 1

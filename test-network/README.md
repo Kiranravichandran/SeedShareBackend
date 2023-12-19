@@ -2,26 +2,6 @@
 
 You can use the `./network.sh` script to stand up a simple Fabric test network. The test network has two peer organizations with one peer each and a single node raft ordering service. You can also use the `./network.sh` script to create channels and deploy chaincode. For more information, see [Using the Fabric test network](https://hyperledger-fabric.readthedocs.io/en/latest/test_network.html). The test network is being introduced in Fabric v2.0 as the long term replacement for the `first-network` sample.
 
-If you are planning to run the test network with consensus type BFT then please pass `-bft` flag as input to the `network.sh` script when creating the channel. Note that currently this sample does not yet support the use of consensus type BFT and CA together.
-That is to create a network use:
-```bash
-./network.sh up -bft
-```
-
-To create a channel use:
-
-```bash
-./network.sh createChannel -bft
-```
-
-To restart a running network use:
-
-```bash
-./network.sh restart -bft
-```
-
-Note that running the createChannel command will start the network, if it is not already running.
-
 Before you can deploy the test network, you need to follow the instructions to [Install the Samples, Binaries and Docker Images](https://hyperledger-fabric.readthedocs.io/en/latest/install.html) in the Hyperledger Fabric documentation.
 
 ## Using the Peer commands
@@ -53,16 +33,18 @@ To learn more about how to use the improvements to the Chaincode-as-a-service pl
 
 ## Podman
 
-*Note - podman support should be considered experimental but the following has been reported to work with podman 4.1.1 on Mac. If you wish to use podman a LinuxVM is recommended.*
+*Note - podman support should be considered experimental. There are issues with volume mounting on MacOS that prevent this working. If wish to use podman a LinuxVM is suggested.*
 
-Fabric's `install-fabric.sh` script has been enhanced to support using `podman` to pull down images and tag them rather than docker. The images are the same, just pulled differently. Simply specify the 'podman' argument when running the `install-fabric.sh` script. 
+A copy of the `install_fabric.sh` script is in the `test-network` directory. This has been enhanced to support a `podman` argument; if used it will use the `podman` command to pull down images and tag them rather than docker. The images are the same, just pulled differently
 
-Similarly, the `network.sh` script has been enhanced so that it can use `podman` and `podman-compose` instead of docker. Just set the environment variable `CONTAINER_CLI` to `podman` before running the `network.sh` script:
+The `network.sh` script has been enhanced so that it can use `podman` and `podman-compose` instead of docker. Ensure that `CONTAINER_CLI` is set as below when running `network.sh` script. 
 
 ```bash
 CONTAINER_CLI=podman ./network.sh up
 ````
 
-As there is no Docker-Daemon when using podman, only the `./network.sh deployCCAAS` command will work. Following the Chaincode-as-a-service Tutorial above should work. 
+As there is no Docker-Daemon when using podman, only the `./network.sh deployCCAAS` command will work.
+
+
 
 
