@@ -1,0 +1,42 @@
+{
+  "name": "aws-nodejs-typescript",
+  "version": "1.0.0",
+  "description": "Serverless aws-nodejs-typescript template",
+  "main": "serverless.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --config webpack.config.js"
+  },
+  "engines": {
+    "node": ">=14.15.0"
+  },
+  "dependencies": {
+    "@middy/core": "^1.5.2",
+    "@middy/http-json-body-parser": "^1.5.2",
+    "esbuild-loader": "^4.0.2",
+    "humps": "^2.0.1",
+    "pg": "^8.11.3",
+    "sequelize": "^6.35.2",
+    "sequelize-typescript": "^2.1.6"
+  },
+  "devDependencies": {
+    "@serverless/typescript": "^2.23.0",
+    "@types/aws-lambda": "^8.10.71",
+    "@types/node": "^14.14.25",
+    "fork-ts-checker-webpack-plugin": "^6.3.3",
+    "json-schema-to-ts": "^1.5.0",
+    "serverless": "^2.23.0",
+    "serverless-esbuild": "^1.17.1",
+    "serverless-offline": "^8.2.0",
+    "serverless-webpack": "^5.5.4",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^9.1.1",
+    "tsconfig-paths": "^3.9.0",
+    "typescript": "^4.9.5",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-node-externals": "^3.0.0"
+  },
+  "author": "The serverless webpack authors (https://github.com/elastic-coders/serverless-webpack)",
+  "license": "MIT"
+}

@@ -1,0 +1,54 @@
+service: seedshare
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  memorySize: 512
+  timeout: 30
+  stackTags:
+    appname: ${self:service.name}
+    createdby: serverless #replace it by your email id
+    owner: appdev
+    approle: creating serverless framework
+    environment: ${self:provider.stage}
+
+# plugin to run it locally
+plugins:
+  - serverless-offline
+  - serverless-webpack
+
+package:
+  individually: false
+
+# lambda functions
+functions:
+  createUser:
+    handler: src/api/handler.createUser
+    events:
+      - http:
+         path: /createUser
+         method: POST
+
+  viewUser:
+    handler: src/api/handler.viewUser
+    events:
+      - http:
+         path: /viewUser
+         method: POST
+
+  createItem:
+    handler: src/api/handler.createItem
+    events:
+      - http:
+         path: /createItem
+         method: POST
+
+  viewItems:
+    handler: src/api/handler.viewItems
+    events:
+      - http:
+         path: /viewItems
+         method: POST

@@ -1,5 +1,5 @@
 'use strict';
 
-const FarmerContract = require('./farmer_contract')
+const UserContract = require('./user_contract')
 
-module.exports.contracts = [FarmerContract];
+module.exports.contracts = [UserContract];
