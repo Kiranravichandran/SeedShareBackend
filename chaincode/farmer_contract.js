@@ -31,12 +31,18 @@ class FarmerContract extends Contract {
             name: name,
             emailId: emailId,
             phone_no: phone_no,
+            ssn: ssn,
             createdAt: ctx.stub.getTxTimestamp()
         }
         const requestBuffer = Buffer.from(JSON.stringify(newRequestObject));
         // put the newRequestObject into request asset
         await ctx.stub.putState(requestKey, requestBuffer);
-        return newRequestObject;
+        
+        return {
+            message: 'Farmer request created successfully',
+            requestKey: requestKey,
+            farmer: newRequestObject
+        };
     }
 
     async viewFarmer(ctx, name, ssn) {
@@ -48,7 +54,7 @@ class FarmerContract extends Contract {
         */
         const userKey = ctx.stub.createCompositeKey('SeedshareNetwork.farmer', [name, ssn])
         const userBuffer = await ctx.stub.getState(userKey);
-        if (userBuffer) {
+        if (userBuffer && userBuffer.length > 0) {
             return JSON.parse(userBuffer.toString());
         }
         else {
@@ -66,18 +72,21 @@ class FarmerContract extends Contract {
         const userRequestKey = ctx.stub.createCompositeKey('SeedshareNetwork.farmer.request', [name, ssn])
         const userKey = ctx.stub.createCompositeKey('SeedshareNetwork.farmer', [name, ssn])
         const requestBuffer = await ctx.stub.getState(userRequestKey);
-        console.log(requestBuffer.toString());
-        if (requestBuffer) {
+        
+        if (requestBuffer && requestBuffer.length > 0) {
             let userdict = JSON.parse(requestBuffer.toString());
             userdict.seedshareCoins = 0;
             const userBuffer = Buffer.from(JSON.stringify(userdict));
             await ctx.stub.putState(userKey, userBuffer);
-            return userdict;
+            
+            return {
+                message: 'Farmer approved successfully',
+                farmer: userdict
+            };
         }
         else {
-            return 'Asset with key ' + name + ' does not exist on the network';
+            return 'Request for farmer ' + name + ' with SSN ' + ssn + ' does not exist on the network';
         }
-
     }
 
     async rechargeAccount(ctx, name, ssn, price, banktxnid) {
@@ -91,7 +100,7 @@ class FarmerContract extends Contract {
         */
         const userKey = ctx.stub.createCompositeKey('SeedshareNetwork.farmer', [name, ssn])
         const userBuffer = await ctx.stub.getState(userKey);
-        if (userBuffer) {
+        if (userBuffer && userBuffer.length > 0) {
             if (banktxnid == 'ssh100' || banktxnid == 'ssh500' || banktxnid == 'ssh1000') {
                 let coins = banktxnid.replace('ssh', '');
                 let userdict = JSON.parse(userBuffer.toString());
@@ -103,6 +112,9 @@ class FarmerContract extends Contract {
             else {
                 return "Invalid bank transaction ID";
             }
+        }
+        else {
+            return 'Farmer with key ' + name + ' does not exist on the network';
         }
     }
 
@@ -120,7 +132,7 @@ class FarmerContract extends Contract {
         const propReqKey = ctx.stub.createCompositeKey('SeedshareNetwork.property.request', [prop_id, owner]);
         const userKey = ctx.stub.createCompositeKey('SeedshareNetwork.farmer', [name, ssn])
         const userBuffer = await ctx.stub.getState(userKey);
-        if (userBuffer) {
+        if (userBuffer && userBuffer.length > 0) {
             const newpropreqobject = {
                 docType: 'property',
                 prop_id: prop_id,
@@ -131,6 +143,9 @@ class FarmerContract extends Contract {
             const requestpropBuffer = Buffer.from(JSON.stringify(newpropreqobject));
             await ctx.stub.putState(propReqKey, requestpropBuffer);
             return newpropreqobject;
+        }
+        else {
+            return 'Farmer with key ' + name + ' does not exist on the network';
         }
 
     }
@@ -147,35 +162,58 @@ class FarmerContract extends Contract {
         const propBuffer = await ctx.stub.getState(propKey);
         const userKey = ctx.stub.createCompositeKey('SeedshareNetwork.farmer', [buyers_name, buyers_ssn])
         const userBuffer = await ctx.stub.getState(userKey);
-        //Checking whether property and farmer are registered on network
-        if (propBuffer && userBuffer) {
-            let propdict = JSON.parse(propBuffer.toString());
-            let userdict = JSON.parse(userBuffer.toString());
-            // Checking whether property status is on sale.
-            if (propdict.status == "onSale") {
-                // Check whether farmer have sufficient balance to buy the property.
-                if (propdict.price <= userdict.seedshareCoins) {
-                    let deductprice = userdict.seedshareCoins - propdict.price;
-                    propdict.owner = buyers_name;
-                    userdict.name = buyers_name;
-                    //propdict.price = deductprice;
-                    propdict.status = "registered";
-                    userdict.seedshareCoins = deductprice;
-                    const updpropBuffer = Buffer.from(JSON.stringify(propdict));
-                    const upduserBuffer = Buffer.from(JSON.stringify(userdict));
-                    await ctx.stub.putState(propKey, updpropBuffer);
-                    await ctx.stub.putState(userKey, upduserBuffer);
-                    return propdict;
-                }
-                else {
-                    return " Insufficient balance";
-                }
-            }
-            else {
-                return " property is not listed for sale";
-            }
+        
+        //Checking whether property exists
+        if (!propBuffer || propBuffer.length === 0) {
+            return 'Property with ID ' + prop_id + ' and owner ' + owner + ' does not exist on the network';
         }
-
+        
+        //Checking whether farmer exists
+        if (!userBuffer || userBuffer.length === 0) {
+            return 'Farmer with name ' + buyers_name + ' does not exist on the network';
+        }
+        
+        let propdict = JSON.parse(propBuffer.toString());
+        let userdict = JSON.parse(userBuffer.toString());
+        
+        // Checking whether property status is on sale.
+        if (propdict.status !== "onSale") {
+            return 'Property is not listed for sale';
+        }
+        
+        // Check whether farmer have sufficient balance to buy the property.
+        if (propdict.price > userdict.seedshareCoins) {
+            return 'Insufficient balance. Required: ' + propdict.price + ', Available: ' + userdict.seedshareCoins;
+        }
+        
+        // Process the purchase
+        let deductprice = userdict.seedshareCoins - propdict.price;
+        
+        // Create new property key with new owner
+        const newPropKey = ctx.stub.createCompositeKey('SeedshareNetwork.property', [prop_id, buyers_name]);
+        
+        // Update property details
+        propdict.owner = buyers_name;
+        propdict.status = "registered";
+        
+        // Update user balance
+        userdict.seedshareCoins = deductprice;
+        
+        const updpropBuffer = Buffer.from(JSON.stringify(propdict));
+        const upduserBuffer = Buffer.from(JSON.stringify(userdict));
+        
+        // Update property with new owner (overwrite the old record)
+        await ctx.stub.putState(newPropKey, updpropBuffer);
+        await ctx.stub.putState(userKey, upduserBuffer);
+        
+        return {
+            message: 'Property purchased successfully',
+            property: propdict,
+            buyer: {
+                name: userdict.name,
+                remainingBalance: userdict.seedshareCoins
+            }
+        };
     }
 
     async approvePropertyRegistration(ctx, prop_id, owner) {
@@ -188,7 +226,7 @@ class FarmerContract extends Contract {
         const propRequestKey = ctx.stub.createCompositeKey('SeedshareNetwork.property.request', [prop_id, owner]);
         const propKey = ctx.stub.createCompositeKey('SeedshareNetwork.property', [prop_id, owner]);
         const requestPropBuffer = await ctx.stub.getState(propRequestKey);
-        if (requestPropBuffer) {
+        if (requestPropBuffer && requestPropBuffer.length > 0) {
             let propdict = JSON.parse(requestPropBuffer.toString());
             const propBuffer = Buffer.from(JSON.stringify(propdict));
             await ctx.stub.putState(propKey, propBuffer);
@@ -208,7 +246,7 @@ class FarmerContract extends Contract {
         */
         const propKey = ctx.stub.createCompositeKey('SeedshareNetwork.property', [prop_id, owner]);
         const propBuffer = await ctx.stub.getState(propKey);
-        if (propBuffer) {
+        if (propBuffer && propBuffer.length > 0) {
             return JSON.parse(propBuffer.toString());
         }
         else {
@@ -227,19 +265,21 @@ class FarmerContract extends Contract {
         */
         const propKey = ctx.stub.createCompositeKey('SeedshareNetwork.property', [prop_id, name]);
         const propBuffer = await ctx.stub.getState(propKey);
-        if (propBuffer) {
+        if (propBuffer && propBuffer.length > 0) {
             let propdict = JSON.parse(propBuffer.toString());
             // Check whether owner is updating the property.  No farmer other than owner is allowed to update the property.
             if (name == propdict.owner) {
                 propdict.status = status;
-                const propBuffer = Buffer.from(JSON.stringify(propdict));
-                await ctx.stub.putState(propKey, propBuffer);
+                const updatedPropBuffer = Buffer.from(JSON.stringify(propdict));
+                await ctx.stub.putState(propKey, updatedPropBuffer);
                 return propdict;
             }
-
+            else {
+                return "Only the property owner can update the property status";
+            }
         }
         else {
-            return "asset with property" + prop_id + "is not available on the network";
+            return "Asset with property " + prop_id + " is not available on the network";
         }
     }
 
