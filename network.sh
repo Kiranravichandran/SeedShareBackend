@@ -473,7 +473,7 @@ function runDemo() {
     
     # Purchase Property
     infoln "Purchasing property..."
-    invokeChaincode "purchaseProperty" "\"101\",\"Kiran\",\"Apurva\",\"210987654321\""
+    invokeChaincode "purchaseProperty" "\"101\",\"Kiran\",\"Ram\",\"210987654321\""
     
     infoln "Demo transactions completed!"
 }

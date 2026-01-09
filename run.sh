@@ -29,6 +29,11 @@ echo "Deploying chaincode..."
 
 echo "Network setup complete! Running demo transactions..."
 
+
+# export ORDERER_CA=${PWD}/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+# export ORG1_TLS_ROOTCERT=${PWD}/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+# export ORG2_TLS_ROOTCERT=${PWD}/organizations/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
+
 # Fixed certificate paths
 ORDERER_CA=${PWD}/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
 ORG1_TLS_ROOTCERT=${PWD}/organizations/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
@@ -70,26 +75,26 @@ peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.exa
 
 # Create buyer farmer
 echo "Creating buyer farmer..."
-peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls true --cafile $ORDERER_CA -C mychannel -n SeedshareNetwork --peerAddresses localhost:7051 --tlsRootCertFiles $ORG1_TLS_ROOTCERT --peerAddresses localhost:9051 --tlsRootCertFiles $ORG2_TLS_ROOTCERT -c '{"function":"requestNewFarmer","Args":["Apurva","apurva@presidio.com","9876543210","210987654321"]}'
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls true --cafile $ORDERER_CA -C mychannel -n SeedshareNetwork --peerAddresses localhost:7051 --tlsRootCertFiles $ORG1_TLS_ROOTCERT --peerAddresses localhost:9051 --tlsRootCertFiles $ORG2_TLS_ROOTCERT -c '{"function":"requestNewFarmer","Args":["Ram",ram@presidio.com","9876543210","210987654321"]}'
 
 # Approve buyer farmer
 echo "Approving buyer farmer..."
-peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls true --cafile $ORDERER_CA -C mychannel -n SeedshareNetwork --peerAddresses localhost:7051 --tlsRootCertFiles $ORG1_TLS_ROOTCERT --peerAddresses localhost:9051 --tlsRootCertFiles $ORG2_TLS_ROOTCERT -c '{"function":"approveNewFarmer","Args":["Apurva","210987654321"]}'
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls true --cafile $ORDERER_CA -C mychannel -n SeedshareNetwork --peerAddresses localhost:7051 --tlsRootCertFiles $ORG1_TLS_ROOTCERT --peerAddresses localhost:9051 --tlsRootCertFiles $ORG2_TLS_ROOTCERT -c '{"function":"approveNewFarmer","Args":["Ram","210987654321"]}'
 
 # Recharge buyer account
 echo "Recharging buyer account..."
-peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls true --cafile $ORDERER_CA -C mychannel -n SeedshareNetwork --peerAddresses localhost:7051 --tlsRootCertFiles $ORG1_TLS_ROOTCERT --peerAddresses localhost:9051 --tlsRootCertFiles $ORG2_TLS_ROOTCERT -c '{"function":"rechargeAccount","Args":["Apurva","210987654321","1500","ssh1000"]}'
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls true --cafile $ORDERER_CA -C mychannel -n SeedshareNetwork --peerAddresses localhost:7051 --tlsRootCertFiles $ORG1_TLS_ROOTCERT --peerAddresses localhost:9051 --tlsRootCertFiles $ORG2_TLS_ROOTCERT -c '{"function":"rechargeAccount","Args":["Ram","210987654321","1500","ssh1000"]}'
 
 # Purchase Property
 echo "Purchasing property..."
-peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls true --cafile $ORDERER_CA -C mychannel -n SeedshareNetwork --peerAddresses localhost:7051 --tlsRootCertFiles $ORG1_TLS_ROOTCERT --peerAddresses localhost:9051 --tlsRootCertFiles $ORG2_TLS_ROOTCERT -c '{"function":"purchaseProperty","Args":["101","Kiran","Apurva","210987654321"]}'
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls true --cafile $ORDERER_CA -C mychannel -n SeedshareNetwork --peerAddresses localhost:7051 --tlsRootCertFiles $ORG1_TLS_ROOTCERT --peerAddresses localhost:9051 --tlsRootCertFiles $ORG2_TLS_ROOTCERT -c '{"function":"purchaseProperty","Args":["101","Kiran","Ram","210987654321"]}'
 
 # View updated property with new owner
 echo "Viewing property after purchase..."
-peer chaincode query -C mychannel -n SeedshareNetwork -c '{"function":"viewProperty","Args":["101","Apurva"]}'
+peer chaincode query -C mychannel -n SeedshareNetwork -c '{"function":"viewProperty","Args":["101","Ram"]}'
 
 # View buyer's updated balance
 echo "Viewing buyer's updated balance..."
-peer chaincode query -C mychannel -n SeedshareNetwork -c '{"function":"viewFarmer","Args":["Apurva","210987654321"]}'
+peer chaincode query -C mychannel -n SeedshareNetwork -c '{"function":"viewFarmer","Args":["Ram","210987654321"]}'
 
 echo "Demo transactions completed!"
